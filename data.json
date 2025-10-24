@@ -1,0 +1,36 @@
+{
+  "house": {
+    "title_ru": "Наш дом",
+    "title_lv": "Mūsu māja",
+    "series": "602",
+    "floors": 9,
+    "label_ru": "602 серия • 9 этажей",
+    "label_lv": "602. sērija • 9 stāvi"
+  },
+
+  "menu": [
+    { "id": "results",  "ru": "Результаты голосований", "lv": "Balsojumu rezultāti" },
+    { "id": "docs",     "ru": "Документы",              "lv": "Dokumenti" },
+    { "id": "qa",       "ru": "Вопросы / Ответы",       "lv": "Jautājumi / Atbildes" },
+    { "id": "works",    "ru": "Планируемые работы",      "lv": "Plānotie darbi" }
+  ],
+
+  "content": {
+    "results": {
+      "ru": "Здесь будут итоги голосований по дому и подъездам.",
+      "lv": "Šeit būs mājas un kāpņutelpu balsojumu rezultāti."
+    },
+    "docs": {
+      "ru": "Здесь разместим договоры, отчёты и важные PDF-документы.",
+      "lv": "Šeit ievietosim līgumus, atskaites un svarīgus PDF dokumentus."
+    },
+    "qa": {
+      "ru": "Раздел Вопрос/Ответ: можно будет задавать вопросы (анонимно или с указанием подъезда/квартиры).",
+      "lv": "Jautājumi/Atbildes: varēs uzdot jautājumus (anonīmi vai norādot kāpņutelpu/dzīvokli)."
+    },
+    "works": {
+      "ru": "Список планируемых работ будет показываться здесь.",
+      "lv": "Plānoto darbu saraksts tiks rādīts šeit."
+    }
+  }
+}

@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Результаты голосований</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    :root{--bg:#0f1115;--panel:#141820;--ink:#e8eaee;--muted:#9aa3b2;--border:#1f2532;--accent:#4b8cff}
+    html,body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
+    .wrap{max-width:960px;margin:0 auto;padding:16px}
+    .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:12px}
+    h2{margin:0 0 10px 0}
+    .stage{position:relative;overflow:hidden;border-radius:12px}
+    svg{width:100%;height:auto;display:block;transition:transform .25s ease}
+    .entrance{cursor:pointer;transition:filter .15s}
+    .entrance:hover{filter:drop-shadow(0 0 12px rgba(75,140,255,.6))}
+    .tip{position:absolute;left:0;top:0;transform:translate(-50%,-110%);background:#0d1220;border:1px solid #20273a;border-radius:10px;padding:8px 10px;font-size:14px;box-shadow:0 8px 20px rgba(0,0,0,.45);display:none}
+    .tip.show{display:block}
+    .row{display:flex;justify-content:space-between;gap:12px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h2>Результаты голосований</h2>
+    <div class="card stage" id="stage">
+      <!-- упрощённый SVG дома -->
+      <svg id="house" viewBox="0 0 900 560" aria-label="Дом">
+        <rect x="0" y="0" width="900" height="560" fill="#d9eefc"/>
+        <rect x="160" y="60" width="680" height="440" fill="#f5f7fb" stroke="#2c3446" stroke-width="4" rx="8"/>
+        <rect x="60" y="20" width="140" height="520" fill="#c54735" stroke="#2c3446" stroke-width="4" rx="8"/>
+        <!-- зоны подъездов (клики) -->
+        <g id="zones">
+          <g class="entrance" data-id="1" transform="translate(60,420)">
+            <rect width="140" height="60" fill="rgba(75,140,255,.08)" stroke="#2c3446" stroke-width="2" rx="8"/>
+            <rect x="28" y="8" width="84" height="44" fill="#5a3b32" stroke="#2c3446" stroke-width="3" rx="4"/>
+          </g>
+          <g class="entrance" data-id="2" transform="translate(200,420)">
+            <rect width="120" height="60" fill="rgba(75,140,255,.08)" stroke="#2c3446" stroke-width="2" rx="8"/>
+            <rect x="18" y="8" width="84" height="44" fill="#5a3b32" stroke="#2c3446" stroke-width="3" rx="4"/>
+          </g>
+          <g class="entrance" data-id="3" transform="translate(360,420)">
+            <rect width="120" height="60" fill="rgba(75,140,255,.08)" stroke="#2c3446" stroke-width="2" rx="8"/>
+            <rect x="18" y="8" width="84" height="44" fill="#5a3b32" stroke="#2c3446" stroke-width="3" rx="4"/>
+          </g>
+          <g class="entrance" data-id="4" transform="translate(520,420)">
+            <rect width="120" height="60" fill="rgba(75,140,255,.08)" stroke="#2c3446" stroke-width="2" rx="8"/>
+            <rect x="18" y="8" width="84" height="44" fill="#5a3b32" stroke="#2c3446" stroke-width="3" rx="4"/>
+          </g>
+          <g class="entrance" data-id="5" transform="translate(680,420)">
+            <rect width="120" height="60" fill="rgba(75,140,255,.08)" stroke="#2c3446" stroke-width="2" rx="8"/>
+            <rect x="18" y="8" width="84" height="44" fill="#5a3b32" stroke="#2c3446" stroke-width="3" rx="4"/>
+          </g>
+        </g>
+      </svg>
+      <!-- табличка -->
+      <div id="tip" class="tip">
+        <div style="font-weight:700;margin-bottom:4px">Подъезд <span id="pid">1</span></div>
+        <div class="row"><span>✅ За</span><span id="yes">0</span></div>
+        <div class="row"><span>❌ Против</span><span id="no">0</span></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const tg = window.Telegram?.WebApp; tg?.ready(); tg?.expand();
+    const votesUrl = `./votes.json?v=${Date.now()}`;
+
+    const stage = document.getElementById('stage');
+    const house = document.getElementById('house');
+    const tip = document.getElementById('tip');
+    const pidEl = document.getElementById('pid');
+    const yesEl = document.getElementById('yes');
+    const noEl  = document.getElementById('no');
+
+    let V = { entrances: [] };
+
+    fetch(votesUrl).then(r=>r.json()).then(json=>{ V=json; bind(); });
+
+    function bind(){
+      stage.querySelectorAll('.entrance').forEach(g=>{
+        const id = +g.dataset.id;
+        g.addEventListener('click', (e)=>{
+          const rec = V.entrances.find(x=>+x.id===id) || {yes:0,no:0};
+          pidEl.textContent = id;
+          yesEl.textContent = rec.yes;
+          noEl.textContent  = rec.no;
+
+          // позиция всплывашки
+          const box = stage.getBoundingClientRect();
+          const x = (e.touches?.[0]?.clientX ?? e.clientX) - box.left;
+          const y = (e.touches?.[0]?.clientY ?? e.clientY) - box.top;
+          tip.style.left = x+'px';
+          tip.style.top  = y+'px';
+          tip.classList.add('show');
+
+          // простой "zoom" — приблизить низ дома
+          house.style.transformOrigin = (x/box.width*100)+'% '+(y/box.height*100)+'%';
+          house.style.transform = 'scale(1.35)';
+          setTimeout(()=>{ house.style.transform = 'scale(1)'; }, 1500);
+        });
+      });
+
+      // клик по пустому месту — скрыть
+      stage.addEventListener('click', (e)=>{
+        if (!e.target.closest('.entrance')) tip.classList.remove('show');
+      });
+    }
+  </script>
+</body>
+</html>

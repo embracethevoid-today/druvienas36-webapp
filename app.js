@@ -1,4 +1,6 @@
-const tg = window.Telegram?.WebApp; tg?.ready?.(); tg?.expand?.();
+const tg = window.Telegram?.WebApp;
+tg?.ready?.();
+tg?.expand?.();
 
 /* ---------- i18n ---------- */
 const L = {
@@ -51,8 +53,9 @@ const L = {
 };
 
 let state = {
-  lang: (tg?.initDataUnsafe?.user?.language_code || 'ru').toLowerCase().startsWith('lv') ? 'lv' : 'ru',
-  page: 'home',            // <— главная с логотипом
+  lang: (tg?.initDataUnsafe?.user?.language_code || 'ru')
+    .toLowerCase().startsWith('lv') ? 'lv' : 'ru',
+  page: 'home',      // главная с логотипом
   votes: null,
   docs: null,
   userId: tg?.initDataUnsafe?.user?.id || 0,
@@ -61,44 +64,79 @@ let state = {
 const $  = (s, r=document)=>r.querySelector(s);
 const $$ = (s, r=document)=>Array.from(r.querySelectorAll(s));
 
-/* header who */
+/* who in header */
 (function setWho(){
   const u = tg?.initDataUnsafe?.user;
-  $('#who').textContent = u?.first_name || (u?.username ? '@'+u.username : L[state.lang].who_fallback);
+  $('#who') && ($('#who').textContent =
+    u?.first_name || (u?.username ? '@'+u.username : L[state.lang].who_fallback));
 })();
 
 /* lang buttons */
-$('#btnRU').onclick = ()=>{ state.lang='ru'; applyLang(); };
-$('#btnLV').onclick = ()=>{ state.lang='lv'; applyLang(); };
+$('#btnRU')?.addEventListener('click', ()=>{ state.lang='ru'; applyLang(); });
+$('#btnLV')?.addEventListener('click', ()=>{ state.lang='lv'; applyLang(); });
 
 function applyLang(){
-  $('#btnRU').classList.toggle('active', state.lang==='ru');
-  $('#btnLV').classList.toggle('active', state.lang==='lv');
-  $('[data-page="results"] span').textContent = L[state.lang].menu_results;
-  $('[data-page="docs"] span').textContent    = L[state.lang].menu_docs;
-  $('[data-page="qa"] span').textContent      = L[state.lang].menu_qa;
-  $('[data-page="works"] span').textContent   = L[state.lang].menu_works;
+  $('#btnRU')?.classList.toggle('active', state.lang==='ru');
+  $('#btnLV')?.classList.toggle('active', state.lang==='lv');
+
+  $('[data-page="results"] span') && (
+    $('[data-page="results"] span').textContent = L[state.lang].menu_results
+  );
+  $('[data-page="docs"] span')    && (
+    $('[data-page="docs"] span').textContent    = L[state.lang].menu_docs
+  );
+  $('[data-page="qa"] span')      && (
+    $('[data-page="qa"] span').textContent      = L[state.lang].menu_qa
+  );
+  $('[data-page="works"] span')   && (
+    $('[data-page="works"] span').textContent   = L[state.lang].menu_works
+  );
+
+  // обновим картинку дома с анти-кэшем
+  const img = $('#homeImg');
+  if (img) img.src = (img.dataset.base || './house.png') + `?v=${Date.now()}`;
+
   render(state.page);
 }
 
 /* navigation */
 $$('.menu-item').forEach(b=>{
-  b.onclick = ()=>{
+  b.addEventListener('click', ()=>{
     $$('.menu-item').forEach(x=>x.classList.remove('active'));
     b.classList.add('active');
     state.page = b.dataset.page;
+    showView();
     render(state.page);
     window.scrollTo({top:0,behavior:'smooth'});
-  };
+  });
 });
 
-/* логотип: клик по большому или по мини — вернуться на главную */
-$('#homeImg').onclick = ()=>goHome();
-$('#homeMini').onclick = ()=>goHome();
+/* клик по логотипу — домой */
+$('#homeImg')?.addEventListener('click', goHome);
+$('#homeMini')?.addEventListener('click', goHome);
+
 function goHome(){
   state.page = 'home';
   $$('.menu-item').forEach(x=>x.classList.remove('active'));
+  showHome();
   render('home');
+}
+
+/* переключение дом/контент */
+function showHome(){
+  document.body.classList.remove('compact');
+  const homeCard = $('#homeCard') || $('#home'); // поддержка обоих id
+  if (homeCard) homeCard.style.display = '';
+  const v = $('#view');
+  if (v) v.style.display = 'none';
+}
+
+function showView(){
+  document.body.classList.add('compact');
+  const homeCard = $('#homeCard') || $('#home');
+  if (homeCard) homeCard.style.display = 'none';
+  const v = $('#view');
+  if (v) v.style.display = '';
 }
 
 /* load data */
@@ -108,18 +146,21 @@ Promise.all([
 ]).then(([votes, docs])=>{
   state.votes = votes;
   state.docs  = docs;
-  applyLang();
+  applyLang();          // отрисуем текущую страницу
 });
 
 /* main renderer */
 function render(page){
-  document.body.classList.toggle('compact', page!=='home');
-  const homeCard = $('#homeCard');
-  homeCard.style.display = (page==='home') ? '' : 'none';
-
   const v = $('#view');
+  if (!v) return;
+
+  // home — только логотип
+  if (page === 'home') {
+    v.innerHTML = '';
+    return;
+  }
+
   v.innerHTML = '';
-  if(page==='home') return;              // только логотип
   if(page==='results') return renderResults(v);
   if(page==='docs')    return renderDocs(v);
   if(page==='qa')      return renderQA(v);
@@ -256,7 +297,9 @@ function renderQaList(items, root){
   });
 }
 
-function escapeHtml(s){ return s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function escapeHtml(s){
+  return s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+}
 
 /* -------- Works ---------- */
 function renderWorks(root){

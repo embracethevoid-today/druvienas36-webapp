@@ -3,192 +3,34 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Druvienas — mājas lietotne</title>
+  <title>Druvienas iela 36 — WebApp</title>
+  <link rel="stylesheet" href="./styles.css" />
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <style>
-    :root{--bg:#0f1115;--panel:#141820;--ink:#e8eaee;--muted:#9aa3b2;--border:#1f2532;--accent:#4b8cff}
-    *{box-sizing:border-box}
-    html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
-    .app{max-width:1100px;margin:0 auto;padding:16px}
-    header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;position:sticky;top:0;background:var(--bg);z-index:5}
-    .title{margin:0;font-weight:800}
-    .lang{display:flex;gap:8px}
-    .btn{border:1px solid var(--border);background:#121723;color:var(--ink);padding:8px 12px;border-radius:10px;cursor:pointer;font-weight:700}
-    .btn.active{outline:2px solid var(--accent)}
-    .layout{display:grid;grid-template-columns:340px 1fr;gap:16px}
-    .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:14px}
-
-    /* Дом: большой на главной, маленький в углу в режиме контента */
-    .houseCard{position:relative;min-height:260px}
-    .houseBox{display:flex;align-items:center;justify-content:center;min-height:240px}
-    .houseImg{width:78%;max-width:300px;height:auto;border-radius:10px;display:block;cursor:pointer;transition:.25s ease}
-    .hint{color:var(--muted);font-size:12px;text-align:center;margin-top:6px}
-
-    /* компактный режим — дом как «Home»-кнопка в правом верхнем углу */
-    body.compact .houseCard{min-height:120px}
-    body.compact .houseBox{min-height:100px}
-    body.compact .houseImg{
-      width:96px;max-width:none;position:absolute;right:12px;top:12px;border-radius:8px;
-      box-shadow:0 8px 24px rgba(0,0,0,.35)
-    }
-    body.compact .hint{display:none}
-
-    .menuItem{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:12px;border:1px solid var(--border);background:#121723;cursor:pointer;margin-bottom:10px}
-    .menuItem:hover{outline:2px solid rgba(75,140,255,.5)}
-    .sectionTitle{font-weight:800;margin:0 0 8px}
-    .sectionText{color:var(--muted);line-height:1.5}
-    .error{color:#ffb4b4;background:#381b1b;border:1px solid #5b2a2a;padding:10px 12px;border-radius:10px;display:none}
-
-    @media (max-width:900px){.layout{grid-template-columns:1fr}}
-  </style>
 </head>
 <body>
   <div class="app">
-    <header>
-      <h3 id="pageTitle" class="title">Druvienas iela 36 — <span id="userName">…</span></h3>
+    <header class="topbar">
+      <div>
+        <h1 class="title">Druvienas iela 36 <span class="muted">— <span id="who">…</span></span></h1>
+      </div>
       <div class="lang">
-        <button id="ruBtn" class="btn">🇷🇺 RU</button>
-        <button id="lvBtn" class="btn">🇱🇻 LV</button>
+        <button id="btnRU" class="btn">🇷🇺 RU</button>
+        <button id="btnLV" class="btn">🇱🇻 LV</button>
       </div>
     </header>
 
-    <div class="layout">
-      <!-- Дом / Home -->
-      <div class="card houseCard">
-        <div class="houseBox">
-          <img id="houseImg" class="houseImg" src="images/house.png" alt="Home" title="Вернуться на главный экран">
-        </div>
-        <div id="homeHint" class="hint">Нажмите на дом, чтобы вернуться на главный экран</div>
-      </div>
+    <nav class="menu">
+      <button data-page="results" class="menu-item">📊 <span data-t="menu_results">Результаты голосований</span></button>
+      <button data-page="docs"    class="menu-item">📄 <span data-t="menu_docs">Документы</span></button>
+      <button data-page="qa"      class="menu-item">💬 <span data-t="menu_qa">Вопросы / Ответы</span></button>
+      <button data-page="works"   class="menu-item">🛠️ <span data-t="menu_works">Планируемые работы</span></button>
+    </nav>
 
-      <!-- Меню + контент -->
-      <div class="card">
-        <div id="menu"></div>
-        <hr style="border:none;border-top:1px solid var(--border);margin:12px 0">
-        <div>
-          <div id="contentTitle" class="sectionTitle"></div>
-          <div id="contentText" class="sectionText"></div>
-          <div id="errorBox" class="error"></div>
-        </div>
-      </div>
-    </div>
+    <main id="view" class="view"></main>
+
+    <footer class="foot muted">@Druvienas36_bot</footer>
   </div>
 
-  <script>
-    // Telegram bootstrap
-    const tg = window.Telegram?.WebApp; tg?.ready(); tg?.expand();
-    const user = tg?.initDataUnsafe?.user;
-    const userNameEl = document.getElementById('userName');
-    userNameEl.textContent = user?.first_name || user?.username ? (user?.username ? '@'+user.username : user.first_name) : 'guest';
-
-    // Простая локализация
-    const DICT = {
-      ru: {
-        appTitle: 'Приложение для дома',
-        menu: [
-          { id:'results', ru:'Результаты голосований', lv:'Balsošanas rezultāti' },
-          { id:'docs',    ru:'Документы',               lv:'Dokumenti' },
-          { id:'qa',      ru:'Вопросы / Ответы',        lv:'Jautājumi / Atbildes' },
-          { id:'works',   ru:'Планируемые работы',      lv:'Plānotie darbi' },
-        ],
-        stub: {
-          results: 'Здесь будут итоги голосований по дому и подъездам.',
-          docs:    'Здесь будет список документов.',
-          qa:      'Задайте вопрос и отслеживайте статус ответа.',
-          works:   'Under construction — скоро будет!'
-        }
-      },
-      lv: {
-        appTitle: 'Mājas lietotne',
-        menu: [
-          { id:'results', ru:'Результаты голосований', lv:'Balsošanas rezultāti' },
-          { id:'docs',    ru:'Документы',               lv:'Dokumenti' },
-          { id:'qa',      ru:'Вопросы / Ответы',        lv:'Jautājumi / Atbildes' },
-          { id:'works',   ru:'Планētie darbi',          lv:'Plānotie darbi' },
-        ],
-        stub: {
-          results: 'Šeit būs balsošanas rezultāti pa māju un kāpņutelpu.',
-          docs:    'Šeit būs dokumentu saraksts.',
-          qa:      'Uzdodiet jautājumu un sekojiet atbildei.',
-          works:   'Under construction — drīzumā!'
-        }
-      }
-    };
-
-    const state = { lang:'ru', active:null };
-    const $ = s => document.querySelector(s);
-
-    const ruBtn=$('#ruBtn'), lvBtn=$('#lvBtn');
-    const menuBox=$('#menu'), pageTitle=$('#pageTitle');
-    const contentTitle=$('#contentTitle'), contentText=$('#contentText'), errorBox=$('#errorBox');
-    const houseImg=$('#houseImg');
-
-    // init lang from Telegram or query
-    const qsLang = new URLSearchParams(location.search).get('lang');
-    state.lang = (qsLang || tg?.initDataUnsafe?.user?.language_code || 'ru').toLowerCase().startsWith('lv') ? 'lv' : 'ru';
-
-    ruBtn.onclick = ()=>{ setLang('ru'); };
-    lvBtn.onclick = ()=>{ setLang('lv'); };
-
-    houseImg.onclick = goHome;
-
-    function setLang(lang){
-      state.lang = lang === 'lv' ? 'lv' : 'ru';
-      ruBtn.classList.toggle('active', state.lang==='ru');
-      lvBtn.classList.toggle('active', state.lang==='lv');
-      pageTitle.firstChild.nodeValue = (state.lang==='lv' ? 'Druvienas iela 36 — ' : 'Druvienas iela 36 — ');
-      renderMenu();
-      if (state.active) openSection(state.active); // обновить заголовки секций
-    }
-
-    function renderMenu(){
-      const L = DICT[state.lang];
-      document.title = L.appTitle;
-      menuBox.innerHTML = '';
-      L.menu.forEach(item=>{
-        const el=document.createElement('div');
-        el.className='menuItem';
-        el.dataset.id=item.id;
-        el.innerHTML=`<span>${state.lang==='lv' ? item.lv : item.ru}</span><span>›</span>`;
-        el.onclick=()=> openSection(item.id);
-        menuBox.appendChild(el);
-      });
-    }
-
-    function goHome(){
-      state.active = null;
-      document.body.classList.remove('compact');
-      contentTitle.textContent = '';
-      contentText.textContent  = '';
-      errorBox.style.display = 'none';
-    }
-
-    function openSection(id){
-      state.active = id;
-      document.body.classList.add('compact'); // сворачиваем дом в угол
-
-      const L = DICT[state.lang];
-      const item = L.menu.find(m=>m.id===id);
-      const title = state.lang==='lv' ? item.lv : item.ru;
-      contentTitle.textContent = title;
-
-      // контент по секциям
-      if (id === 'results') {
-        // встраиваем results.html внутрь контента
-        contentText.innerHTML = `<iframe src="results.html?v=${Date.now()}" style="width:100%;height:520px;border:1px solid var(--border);border-radius:12px;"></iframe>`;
-      } else if (id === 'docs') {
-        contentText.textContent = L.stub.docs;
-      } else if (id === 'qa') {
-        contentText.textContent = L.stub.qa;
-      } else if (id === 'works') {
-        contentText.innerHTML = `<div style="padding:12px;border:1px dashed var(--border);border-radius:12px">${L.stub.works}</div>`;
-      } else {
-        contentText.textContent = '';
-      }
-    }
-
-    // boot
-    setLang(state.lang);
-  </script>
+  <script src="./app.js"></script>
 </body>
 </html>

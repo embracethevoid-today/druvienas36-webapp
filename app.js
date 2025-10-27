@@ -1,6 +1,6 @@
 const tg = window.Telegram?.WebApp; tg?.ready?.(); tg?.expand?.();
 
-// ---------- i18n ----------
+/* ---------- i18n ---------- */
 const L = {
   ru: {
     who_fallback: "гость",
@@ -49,40 +49,39 @@ const L = {
     works_text: "Under construction — come back later."
   }
 };
+
 let state = {
   lang: (tg?.initDataUnsafe?.user?.language_code || 'ru').toLowerCase().startsWith('lv') ? 'lv' : 'ru',
-  page: 'results',
+  page: 'home',            // <— главная с логотипом
   votes: null,
   docs: null,
   userId: tg?.initDataUnsafe?.user?.id || 0,
 };
 
-const $ = (s, r=document)=>r.querySelector(s);
+const $  = (s, r=document)=>r.querySelector(s);
 const $$ = (s, r=document)=>Array.from(r.querySelectorAll(s));
 
-// header who
+/* header who */
 (function setWho(){
   const u = tg?.initDataUnsafe?.user;
   $('#who').textContent = u?.first_name || (u?.username ? '@'+u.username : L[state.lang].who_fallback);
 })();
 
-// lang buttons
+/* lang buttons */
 $('#btnRU').onclick = ()=>{ state.lang='ru'; applyLang(); };
 $('#btnLV').onclick = ()=>{ state.lang='lv'; applyLang(); };
+
 function applyLang(){
-  // toggle btns
   $('#btnRU').classList.toggle('active', state.lang==='ru');
   $('#btnLV').classList.toggle('active', state.lang==='lv');
-  // menu labels
   $('[data-page="results"] span').textContent = L[state.lang].menu_results;
   $('[data-page="docs"] span').textContent    = L[state.lang].menu_docs;
   $('[data-page="qa"] span').textContent      = L[state.lang].menu_qa;
   $('[data-page="works"] span').textContent   = L[state.lang].menu_works;
-  // re-render current page
   render(state.page);
 }
 
-// menu routing
+/* navigation */
 $$('.menu-item').forEach(b=>{
   b.onclick = ()=>{
     $$('.menu-item').forEach(x=>x.classList.remove('active'));
@@ -92,30 +91,42 @@ $$('.menu-item').forEach(b=>{
     window.scrollTo({top:0,behavior:'smooth'});
   };
 });
-// default active
-$('[data-page="results"]').classList.add('active');
 
-// load data
+/* логотип: клик по большому или по мини — вернуться на главную */
+$('#homeImg').onclick = ()=>goHome();
+$('#homeMini').onclick = ()=>goHome();
+function goHome(){
+  state.page = 'home';
+  $$('.menu-item').forEach(x=>x.classList.remove('active'));
+  render('home');
+}
+
+/* load data */
 Promise.all([
   fetch('./votes.json').then(r=>r.json()).catch(()=>null),
   fetch('./docs.json').then(r=>r.json()).catch(()=>[])
 ]).then(([votes, docs])=>{
   state.votes = votes;
-  state.docs = docs;
+  state.docs  = docs;
   applyLang();
 });
 
-// main renderer
+/* main renderer */
 function render(page){
+  document.body.classList.toggle('compact', page!=='home');
+  const homeCard = $('#homeCard');
+  homeCard.style.display = (page==='home') ? '' : 'none';
+
   const v = $('#view');
   v.innerHTML = '';
+  if(page==='home') return;              // только логотип
   if(page==='results') return renderResults(v);
   if(page==='docs')    return renderDocs(v);
   if(page==='qa')      return renderQA(v);
   if(page==='works')   return renderWorks(v);
 }
 
-// -------- Results ----------
+/* -------- Results ---------- */
 function renderResults(root){
   const Lc = L[state.lang];
   if(!state.votes){ root.innerHTML = `<p class="muted">No data.</p>`; return; }
@@ -129,34 +140,29 @@ function renderResults(root){
   grid.className='grid';
   root.appendChild(grid);
 
-  // Expect entrances 1..5
   for(let i=1;i<=5;i++){
     const item = state.votes.entrances.find(e=>e.id===i) || {id:i,yes:0,no:0};
-    const card = document.createElement('div');
-    card.className='card';
+    const card = document.createElement('div'); card.className='card';
 
-    const thumb = document.createElement('div');
-    thumb.className='thumb';
-    const img = new Image();
-    img.src = `./images/entrance${i}.png`;     // твои отдельные PNG
+    const thumb = document.createElement('div'); thumb.className='thumb';
+    const img = new Image(); img.className='thumb-img';
+    img.src = `./images/entrance${i}.png`;
     img.onerror = ()=>{ img.src = './images/entrance.png'; };
-    const title = document.createElement('h4');
-    title.textContent = `${Lc.entrance} ${item.id}`;
-    thumb.append(img, title);
+    const title = document.createElement('h4'); title.textContent = `${Lc.entrance} ${item.id}`;
+    thumb.append(img,title);
 
-    const row = document.createElement('div');
-    row.className='row';
+    const row = document.createElement('div'); row.className='row';
     row.innerHTML = `
       <span class="pill ok">✅ ${item.yes} ${Lc.yes}</span>
       <span class="pill bad">❌ ${item.no} ${Lc.no}</span>
     `;
 
-    card.append(thumb, row);
+    card.append(thumb,row);
     grid.appendChild(card);
   }
 }
 
-// -------- Docs ----------
+/* -------- Docs ---------- */
 function renderDocs(root){
   const Lc = L[state.lang];
   if(!Array.isArray(state.docs)){ root.innerHTML = `<p class="muted">No data.</p>`; return; }
@@ -166,14 +172,13 @@ function renderDocs(root){
     const title = document.createElement('div'); title.className='meta';
     title.innerHTML = `<strong>${d.title?.[state.lang] || d.title?.ru || '—'}</strong>
       <span class="muted">${d.type?.toUpperCase() || ''}</span>`;
-    const a = document.createElement('a'); a.textContent = Lc.docs_open; a.target="_blank";
-    a.href = d.url;
-    el.append(title, a);
+    const a = document.createElement('a'); a.textContent = Lc.docs_open; a.target="_blank"; a.href = d.url;
+    el.append(title,a);
     root.appendChild(el);
   });
 }
 
-// -------- QA (localStorage stub) ----------
+/* -------- QA (localStorage stub) ---------- */
 function renderQA(root){
   const Lc = L[state.lang];
   const form = document.createElement('form');
@@ -201,7 +206,6 @@ function renderQA(root){
   const list = document.createElement('div'); list.className='list';
   root.appendChild(list);
 
-  // load existing
   const key = 'qa_items';
   const items = JSON.parse(localStorage.getItem(key)||'[]');
   renderQaList(items, list);
@@ -214,7 +218,6 @@ function renderQA(root){
     const text = fd.get('text')?.trim();
     if(!entrance || !flat || !text){ alert(Lc.ask_required); return; }
 
-    // limit 2/day per user
     const uid = state.userId || 0;
     const dayKey = `qa:sent:${uid}:${new Date().toISOString().slice(0,10)}`;
     const count = +(localStorage.getItem(dayKey)||'0');
@@ -255,7 +258,7 @@ function renderQaList(items, root){
 
 function escapeHtml(s){ return s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
-// -------- Works ----------
+/* -------- Works ---------- */
 function renderWorks(root){
   const Lc = L[state.lang];
   const box = document.createElement('div'); box.className='center';

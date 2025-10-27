@@ -1,181 +1,36 @@
 <!doctype html>
 <html lang="ru">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Druvienas — mājas lietotne (Stage 0)</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<style>
-  :root{--bg:#0f1115;--panel:#141820;--ink:#e8eaee;--muted:#9aa3b2;--border:#1f2532;--accent:#4b8cff}
-  *{box-sizing:border-box}
-  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
-  .app{max-width:1100px;margin:0 auto;padding:16px}
-  header{display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;background:var(--bg);margin-bottom:12px}
-  .title{margin:0;font-size:18px;font-weight:800}
-  .controls{display:flex;align-items:center;gap:8px}
-  .btn{border:1px solid var(--border);background:#121723;color:var(--ink);padding:8px 12px;border-radius:10px;cursor:pointer;font-weight:700}
-  .btn.active{outline:2px solid var(--accent)}
-  /* мини-логотип справа в хедере */
-  .miniLogo{width:32px;height:32px;border-radius:8px;display:none;cursor:pointer;border:1px solid var(--border);background:#121723;padding:2px}
-  .miniLogo img{display:block;width:100%;height:100%;object-fit:cover;border-radius:6px}
-
-  /* макет: слева рабочая зона (логотип/контент), справа меню */
-  .grid{display:grid;grid-template-columns:1fr 320px;gap:16px}
-  @media (max-width:900px){.grid{grid-template-columns:1fr}}
-
-  .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:14px}
-  /* рабочая зона (сюда грузим контент) */
-  .work{min-height:360px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
-  .homeBox{display:flex;flex-direction:column;align-items:center;gap:10px}
-  .homeLogo{width:min(78%,420px);height:auto;border-radius:12px;box-shadow:0 16px 40px rgba(0,0,0,.35)}
-  .homeHint{color:var(--muted);font-size:13px}
-
-  /* правый блок: меню */
-  .menu .item{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:12px;border:1px solid var(--border);background:#121723;cursor:pointer;margin-bottom:10px}
-  .menu .item:hover{outline:2px solid rgba(75,140,255,.5)}
-  .sectionTitle{font-weight:800;margin:0 0 8px}
-  .sectionText{color:var(--muted);line-height:1.5}
-
-  /* когда раздел открыт: показываем мини-лого */
-  .compact .miniLogo{display:block}
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Druvienas iela 36 — WebApp</title>
+  <link rel="stylesheet" href="./styles.css" />
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
   <div class="app">
-    <header>
-      <h3 class="title" id="pageTitle">Druvienas iela 36 — …</h3>
-      <div class="controls">
-        <div class="miniLogo" id="miniHome" title="На главный">
-          <img src="./house.png" alt="home">
-        </div>
-        <button id="ruBtn" class="btn">🇷🇺 RU</button>
-        <button id="lvBtn" class="btn">🇱🇻 LV</button>
+    <header class="topbar">
+      <div>
+        <h1 class="title">Druvienas iela 36 <span class="muted">— <span id="who">…</span></span></h1>
+      </div>
+      <div class="lang">
+        <button id="btnRU" class="btn">🇷🇺 RU</button>
+        <button id="btnLV" class="btn">🇱🇻 LV</button>
       </div>
     </header>
 
-    <div class="grid">
-      <!-- ЛЕВАЯ КОЛОНКА: рабочая зона -->
-      <div class="card work" id="workArea">
-        <!-- Главный экран -->
-        <div class="homeBox" id="homeView">
-          <img class="homeLogo" src="./house.png" alt="Дом">
-          <div class="homeHint" id="homeHint">Выберите пункт справа, чтобы открыть раздел</div>
-        </div>
-        <!-- Здесь будем подменять контент -->
-        <div id="contentView" style="display:none;width:100%"></div>
-      </div>
+    <nav class="menu">
+      <button data-page="results" class="menu-item">📊 <span data-t="menu_results">Результаты голосований</span></button>
+      <button data-page="docs"    class="menu-item">📄 <span data-t="menu_docs">Документы</span></button>
+      <button data-page="qa"      class="menu-item">💬 <span data-t="menu_qa">Вопросы / Ответы</span></button>
+      <button data-page="works"   class="menu-item">🛠️ <span data-t="menu_works">Планируемые работы</span></button>
+    </nav>
 
-      <!-- ПРАВАЯ КОЛОНКА: меню -->
-      <div class="card menu" id="menu">
-        <!-- генерируется скриптом -->
-      </div>
-    </div>
+    <main id="view" class="view"></main>
+
+    <footer class="foot muted">@Druvienas36_bot</footer>
   </div>
 
-<script>
-  // Telegram init
-  const tg = window.Telegram?.WebApp; tg?.ready(); tg?.expand();
-  const user = tg?.initDataUnsafe?.user;
-  const displayName = user?.first_name || (user?.username ? '@'+user.username : 'guest');
-  document.getElementById('pageTitle').textContent = `Druvienas iela 36 — ${displayName}`;
-
-  // локализация
-  const L = {
-    ru: {
-      menu: {
-        results: 'Результаты голосований',
-        docs:    'Документы',
-        qa:      'Вопросы / Ответы',
-        plan:    'Планируемые работы'
-      },
-      sections: {
-        results: { title:'Результаты голосований', text:'Здесь в дальнейшем будет интерактив.' },
-        docs:    { title:'Документы',              text:'Раздел документов (заглушка).' },
-        qa:      { title:'Вопросы / Ответы',       text:'Раздел Q&A (заглушка).' },
-        plan:    { title:'Планируемые работы',     text:'Раздел с планами (заглушка).' },
-      }
-    },
-    lv: {
-      menu: {
-        results: 'Balsošanas rezultāti',
-        docs:    'Dokumenti',
-        qa:      'Jautājumi / Atbildes',
-        plan:    'Plānotie darbi'
-      },
-      sections: {
-        results: { title:'Balsošanas rezultāti', text:'Te vēlāk būs interaktīvs.' },
-        docs:    { title:'Dokumenti',            text:'Dokumentu sadaļa (vietturis).' },
-        qa:      { title:'Jautājumi / Atbildes', text:'J&A sadaļa (vietturis).' },
-        plan:    { title:'Plānotie darbi',       text:'Plānoto darbu sadaļa (vietturis).' },
-      }
-    }
-  };
-  let lang = (user?.language_code || 'ru').toLowerCase().startsWith('lv') ? 'lv' : 'ru';
-
-  const ruBtn = document.getElementById('ruBtn');
-  const lvBtn = document.getElementById('lvBtn');
-  const menuEl = document.getElementById('menu');
-  const appEl  = document.querySelector('.app');
-  const work   = document.getElementById('workArea');
-  const homeView = document.getElementById('homeView');
-  const contentView = document.getElementById('contentView');
-  const miniHome = document.getElementById('miniHome');
-
-  ruBtn.onclick = () => { lang='ru'; renderMenu(); if (!contentViewVisible()) updateLangInContent(); setLangButtons();};
-  lvBtn.onclick = () => { lang='lv'; renderMenu(); if (!contentViewVisible()) updateLangInContent(); setLangButtons();};
-
-  function setLangButtons(){
-    ruBtn.classList.toggle('active', lang==='ru');
-    lvBtn.classList.toggle('active', lang==='lv');
-  }
-
-  const MENU = ['results','docs','qa','plan'];
-
-  function renderMenu(){
-    const t = L[lang].menu;
-    menuEl.innerHTML='';
-    MENU.forEach(id=>{
-      const item = document.createElement('div');
-      item.className = 'item';
-      item.innerHTML = `<span>${t[id]}</span><span>›</span>`;
-      item.onclick = () => openSection(id);
-      menuEl.appendChild(item);
-    });
-  }
-
-  function openSection(id){
-    // включаем compact-режим: мини-лого рядом с RU/LV
-    document.body.classList.add('compact');
-    homeView.style.display = 'none';
-    contentView.style.display = 'block';
-    // рендерим контент
-    const sec = L[lang].sections[id];
-    contentView.innerHTML = `
-      <div class="sectionTitle">${sec.title}</div>
-      <div class="sectionText">${sec.text}</div>
-    `;
-  }
-
-  function contentViewVisible(){ return homeView.style.display === 'none'; }
-
-  // мини-логотип: возврат на главный
-  miniHome.onclick = () => {
-    document.body.classList.remove('compact');
-    contentView.style.display = 'none';
-    homeView.style.display = 'flex';
-  };
-
-  function updateLangInContent(){
-    // на главном экране пока только подсказка; тексты разделов перерисуются при открытии
-    document.getElementById('homeHint').textContent =
-      lang==='lv' ? 'Izvēlieties sadaļu labajā pusē, lai atvērtu to' :
-                    'Выберите пункт справа, чтобы открыть раздел';
-  }
-
-  // init
-  setLangButtons();
-  renderMenu();
-  updateLangInContent();
-</script>
+  <script src="./app.js"></script>
 </body>
 </html>

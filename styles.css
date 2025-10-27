@@ -1,0 +1,48 @@
+:root{
+  --bg:#0f1115;--panel:#141820;--ink:#e8eaee;--muted:#9aa3b2;--border:#1f2532;--accent:#4b8cff;--ok:#53d769;--bad:#ff6468
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
+.app{max-width:980px;margin:0 auto;padding:16px}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.title{margin:0;font-size:20px;font-weight:800}
+.muted{color:var(--muted)}
+.lang{display:flex;gap:8px}
+.btn{border:1px solid var(--border);background:#121723;color:var(--ink);padding:8px 12px;border-radius:10px;cursor:pointer;font-weight:700}
+.btn.active{outline:2px solid var(--accent)}
+.menu{display:flex;flex-wrap:wrap;gap:10px;margin:16px 0}
+.menu-item{border:1px solid var(--border);background:var(--panel);color:var(--ink);padding:10px 14px;border-radius:12px;cursor:pointer}
+.menu-item.active{outline:2px solid rgba(75,140,255,.5)}
+.view{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px;min-height:320px}
+
+/* Results grid */
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:720px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.card{background:#121723;border:1px solid var(--border);border-radius:14px;padding:12px}
+.card h4{margin:0 0 6px 0}
+.card .thumb{display:flex;align-items:center;gap:10px}
+.card img{width:56px;height:56px;border-radius:10px;object-fit:cover;background:#0e121a;border:1px solid var(--border)}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:#0e121a;border:1px solid var(--border);font-weight:700}
+.ok{color:var(--ok)} .bad{color:var(--bad)}
+.row{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+
+/* Docs list */
+.doc{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px;border:1px solid var(--border);border-radius:12px;background:#121723;margin-bottom:10px}
+.doc a{color:#b8cbff;text-decoration:none}
+.doc .meta{display:flex;flex-direction:column}
+
+/* QA */
+.form{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:12px}
+.form label{display:flex;flex-direction:column;gap:6px}
+.form input,.form select,.form textarea{background:#0e121a;color:var(--ink);border:1px solid var(--border);border-radius:10px;padding:10px}
+.form textarea{grid-column:1/-1;min-height:100px;resize:vertical}
+.form .actions{grid-column:1/-1;display:flex;gap:8px;justify-content:flex-end}
+.list{display:grid;gap:10px}
+.qa{border:1px solid var(--border);border-radius:12px;background:#121723;padding:12px}
+.tag{font-size:12px;color:var(--muted)}
+.status{font-weight:800}
+.foot{margin-top:14px;text-align:center}
+
+/* Works */
+.center{display:grid;place-items:center;min-height:220px;text-align:center}
+.center img{width:160px;opacity:.9;margin-bottom:12px}

@@ -1,0 +1,14 @@
+[
+  {
+    "id": "agreement_cr_2025",
+    "title": { "ru": "Договор с CR (черновик)", "lv": "Līgums ar CR (melnraksts)" },
+    "type": "tg",
+    "url": "https://t.me/c/XXXXXXXX/123"
+  },
+  {
+    "id": "house_rules",
+    "title": { "ru": "Правила дома", "lv": "Mājas noteikumi" },
+    "type": "url",
+    "url": "https://example.com/rules.pdf"
+  }
+]

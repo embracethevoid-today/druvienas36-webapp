@@ -10,17 +10,28 @@
 <body>
   <div class="app">
     <header class="topbar">
-      <div>
+      <div class="titlebox">
         <h1 class="title">
           Druvienas iela 36
           <span class="muted">— <span id="who">…</span></span>
         </h1>
+        <!-- свёрнутый логотип (появляется в compact) -->
+        <img id="homeMini" class="home-mini" src="./images/house.png" alt="home" title="На главную" />
       </div>
       <div class="lang">
         <button id="btnRU" class="btn">🇷🇺 RU</button>
         <button id="btnLV" class="btn">🇱🇻 LV</button>
       </div>
     </header>
+
+    <!-- крупный логотип на главной -->
+    <section id="homeCard" class="card home">
+      <div class="home-box">
+        <img id="homeImg" class="home-img" src="./images/house.png" alt="Дом" />
+        <!-- подписи умышленно скрыты по умолчанию -->
+        <div id="homeCaption" class="home-caption" aria-hidden="true"></div>
+      </div>
+    </section>
 
     <nav class="menu">
       <button data-page="results" class="menu-item">📊 <span data-t="menu_results">Результаты голосований</span></button>
